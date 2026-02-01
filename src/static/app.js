@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
         const participantsList = details.participants
-          .map(p => `<li>${p}</li>`)
+          .map(p => `<span class="participant-item">${p}<span class="delete-participant" title="Remove">&times;</span></span>`)
           .join("");
 
         activityCard.innerHTML = `
@@ -30,9 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
           <div class="participants-section">
             <strong>Current Participants:</strong>
-            <ul class="participants-list">
+            <div class="participants-list">
               ${participantsList}
-            </ul>
+            </div>
           </div>
         `;
 
@@ -43,6 +43,28 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
+
+        // Add delete event listeners for each participant
+        const participantItems = activityCard.querySelectorAll('.participant-item');
+        participantItems.forEach((item, idx) => {
+          const deleteBtn = item.querySelector('.delete-participant');
+          deleteBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const participantEmail = details.participants[idx];
+            try {
+              const response = await fetch(`/activities/${encodeURIComponent(name)}/unregister?email=${encodeURIComponent(participantEmail)}`, {
+                method: 'POST',
+              });
+              if (response.ok) {
+                fetchActivities(); // Refresh list
+              } else {
+                alert('Failed to unregister participant.');
+              }
+            } catch (error) {
+              alert('Error unregistering participant.');
+            }
+          });
+        });
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
